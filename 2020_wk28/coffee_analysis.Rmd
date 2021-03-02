@@ -1,0 +1,131 @@
+---
+title: "Coffee Ratings"
+output:
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Dependencies
+```{r}
+library(tidyverse)
+library(rpart)
+library(rpart.plot)
+
+```
+
+## Loading in data
+
+```{r}
+
+coffee_ratings <- read_csv("data/coffee_ratings.csv")
+
+```
+
+
+```{r}
+
+head(coffee_ratings)
+names(coffee_ratings)
+
+```
+
+```{r}
+
+species <- unique(coffee_ratings$species)
+paste(species)
+```
+
+There are `r length(species)` 'species' of coffee, in this dataset: `r paste(species, collapse = " & ")`. 
+
+
+
+```{r}
+coffee_ratings %>% 
+  group_by(country_of_origin) %>% 
+  summarise(avg_cup_points = mean(total_cup_points)) %>% 
+  arrange(desc(avg_cup_points)) %>% 
+  head(5) %>% 
+  ggplot(aes(x = reorder(country_of_origin, 
+                         -avg_cup_points), 
+             y = avg_cup_points)) +
+  coord_cartesian(ylim=c(80, 87)) +
+  geom_col(fill = "#634832") +
+  theme_minimal() +
+  labs(title = "Top 5 Countries of Origin",
+       subtitle =) +
+  theme(axis.title = element_blank(),
+        axis.text.y = element_text(face = "bold", 
+                                   size = 15,
+                                   color = "#38220f"),
+        axis.text.x = element_text(face = "bold", 
+                                   size = 15,
+                                   color = "#38220f"),
+        plot.title = element_text(size = 20, 
+                                  face = "bold",
+                                  color = "#38220f"),
+        plot.background = element_rect(fill = "#dbc1ac"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_line(color = "#967259")
+        
+        ) +
+  geom_text(aes(label = round(avg_cup_points, 1)), 
+            vjust = 2, 
+            size = 10, 
+            color = "#967259",
+            fontface = "bold")
+```
+
+
+```{r, echo = F, include = F}
+ggsave(filename="plots/coffee_origin_plot.png", 
+       device="png", 
+       height=5, 
+       width=8, 
+       units="in", 
+       dpi=500)
+
+```
+
+```{r}
+
+coffee_ratings %>% 
+  ggplot(aes(x = aroma, y = total_cup_points)) +
+  geom_point() 
+
+```
+
+
+```{r, echo = F, include = F}
+
+logreg_data <- coffee_ratings %>% 
+  select(species, aroma:sweetness, moisture)
+  # mutate(species = recode(species,
+  #        Arabica = 0,
+  #        Robusta = 1)) %>%
+
+```
+
+```{r}
+
+tree <- rpart(species ~ .,
+            data = logreg_data)
+
+rpart.plot(tree)
+```
+
+```{r}
+
+logreg_data %>% 
+  select(-species) %>% 
+  cor() %>% 
+  knitr::kable() %>% 
+  kableExtra::kable_styling()
+
+
+```
+
