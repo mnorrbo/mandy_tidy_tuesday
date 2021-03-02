@@ -1,26 +1,204 @@
 ---
 title: "Super Bowl Ads"
-output: html_document
+author: "Mandy Norrbo"
+output:
+  html_document:
+    theme: journal
+    highlight: haddock
+    
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-# Dependencies
+# About the dataset
+
+This dataset was sourced from [rfordatascience/tidytuesday](https://github.com/rfordatascience/tidytuesday) and contains information on Super Bowl commercials. 
+
+<details>
+<summary>**Data Dictionary**</summary>
+|**variable**                  |**class**     |**description** |
+|:-------------------------|:---------|:-----------|
+|year                      |double    | Superbowl year |*
+|brand                     |character | Brand for commercial |
+|*superbowl_ads_dot_com_url* |character | Superbowl ad URL |
+|*youtube_url*               |character | Youtube URL |
+|*funny*                     |logical   | Contains humor |
+|*show_product_quickly*      |logical   | Shows product quickly |
+|*patriotic*                 |logical   | Patriotic |
+|*celebrity*                 |logical   | Contains celebrity |
+|*danger*                    |logical   | Contains danger |
+|*animals*                   |logical   | Contains animals |
+|*use_sex*                   |logical   | Uses sexuality |
+|*id*                        |character | Youtube ID |
+|*kind*                      |character | Youtube Kind |
+|*etag*                      |character | Youtube etag |
+|*view_count*                |integer   | Youtube view count |
+|*like_count*                |integer   | Youtube like count |
+|*dislike_count*             |integer   | Youtube dislike count |
+|*favorite_count*            |integer   | Youtube favorite count |
+|*comment_count*             |integer   | Youtube comment count |
+|*published_at*              |character | Youtube when published |
+|*title*                     |character | Youtube title |
+|*description*               |character | Youtube description |
+|*thumbnail*                 |character | Youtube thumbnail |
+|*channel_title*             |character | Youtube channel name |
+|*category_id*               |character | Youtube content category id |
+</details>
+
+
+
+# Dependencies and data
 
 ```{r}
 library(tidyverse)
-```
+library(ggtext)
+library(patchwork)
 
-# Data exploration
-
-```{r}
 superbowl_ads <- read_csv("data/youtube.csv")
 ```
 
+# Ad content visualisation
+
+## Reshaping
+
+```{r}
+ads_long <- superbowl_ads %>% 
+  select(-show_product_quickly) %>% 
+  pivot_longer(
+    cols = funny:use_sex,
+    names_to = "contains_category",
+    values_to = "contains_value"
+  ) 
+
+ad_content <- ads_long %>% 
+  group_by(contains_category, contains_value) %>% 
+  summarise(avg_likes = mean(like_count, na.rm = T)) %>% 
+  group_by(contains_category) %>% 
+  # create lgl col that is TRUE when contains TRUE avg_likes > contains FALSE avg_likes
+  # i.e. whether the ad should contain the thing to get more likes
+  mutate(should_contain = avg_likes - lag(avg_likes) > 0) %>%
+  fill(should_contain, .direction = "up") %>% 
+  mutate(
+    contains_category = recode(
+      contains_category,
+      animals = "Ad contains animals",
+      celebrity = "Ad contains celebrity",
+      danger = "Ad contains danger",
+      patriotic = "Ad is patriotic",
+      use_sex = "Ad uses sexuality",
+      funny = "Ad contains humour"
+      ),
+    contains_value = as.character(contains_value),
+    contains_value = recode(
+      contains_value,
+      "TRUE" = "Yes",
+      "FALSE" = "No"
+      ),
+    contains_value = factor(contains_value, levels = c("Yes", "No"))
+    )
+
+```
+
+## Custom theme
+```{r}
+ad_content_theme <- function() {
+  theme_minimal() %+replace% 
+        theme(plot.title = element_text(size = 16),
+              strip.background = element_rect(fill = "#B0B7BD", colour = "white"))
+}
+```
+
+## Create visualisation
+
 ```{r}
 
+g1 <- ad_content %>% 
+  filter(should_contain == TRUE) %>% 
+  ggplot() +
+  aes(x = contains_value, y = avg_likes, fill = contains_value) +
+  geom_col() +
+  facet_wrap(~contains_category) +
+  labs(x = element_blank(),
+       title = "In ads, **celebrities**, **danger** and **patriotism** are liked<br>",
+       y = "Number of likes") +
+  scale_fill_manual(values = c("Yes" = "#0A2342", "No" = "#C81F32"),
+                    guide = "none") +
+  ad_content_theme() +
+  ylim(0, 8000) +
+  theme(
+    plot.title = element_markdown()
+  )
+  
+
+g2 <- ad_content %>% 
+  filter(should_contain == FALSE) %>% 
+  ggplot() +
+  aes(x = contains_value, y = avg_likes, fill = contains_value) +
+  geom_col() +
+  facet_wrap(~contains_category) +
+  labs(x = element_blank(),
+       title = "Whereas, **animals**, **humour** and **sexuality** are not<br>",
+       y = "Number of likes",
+       caption = "**Source**: *Super Bowl ads on YouTube*") +
+  scale_fill_manual(values = c("Yes" = "#0A2342", "No" = "#C81F32"),
+                    guide = "none") +
+  ad_content_theme() +
+  ylim(0, 8000) +
+  theme(
+    plot.title = element_markdown(),
+    plot.caption = element_markdown()
+  )
+
+
+g1 / g2
+```
+
+# Another visualisation
+
+## Recoding video categories
+
+```{r}
+ad_text <- superbowl_ads %>% 
+  select(year, brand, title, description, category_id) %>% 
+  mutate(category_id = as.character(category_id),
+         # source: https://gist.github.com/dgp/1b24bf2961521bd75d6c#gistcomment-2714395
+         video_category = case_when(
+              category_id == "1" ~ "Film & Animation",
+              category_id == "2" ~ "Autos & Vehicles",
+              category_id == "10" ~ "Music",
+              category_id == "15" ~ "Pets & Animals",
+              category_id == "17" ~ "Sports",
+              category_id == "18" ~ "Short Movies",
+              category_id == "19" ~ "Travel & Events",
+              category_id == "20" ~ "Gaming",
+              category_id == "21" ~ "Videoblogging",
+              category_id == "22" ~ "People & Blogs",
+              category_id == "23" ~ "Comedy",
+              category_id == "24" ~ "Entertainment",
+              category_id == "25" ~ "News & Politics",
+              category_id == "26" ~ "Howto & Style",
+              category_id == "27" ~ "Education",
+              category_id == "28" ~ "Science & Technology",
+              category_id == "29" ~ "Nonprofits & Activism",
+              category_id == "30" ~ "Movies",
+              category_id == "31" ~ "Anime/Animation",
+              category_id == "32" ~ "Action/Adventure",
+              category_id == "33" ~ "Classics",
+              category_id == "34" ~ "Comedy",
+              category_id == "35" ~ "Documentary",
+              category_id == "36" ~ "Drama",
+              category_id == "37" ~ "Family",
+              category_id == "38" ~ "Foreign",
+              category_id == "39" ~ "Horror",
+              category_id == "40" ~ "Sci-Fi/Fantasy",
+              category_id == "41" ~ "Thriller",
+              category_id == "42" ~ "Shorts",
+              category_id == "43" ~ "Shows",
+              category_id == "44" ~ "Trailers",
+              TRUE ~ "Unknown"
+  ))
 
 ```
 
