@@ -1,4 +1,4 @@
-# Mandy's `TidyTuesday`
+# Mandy's `TidyTuesday` attempts
 
 Here I will attempt to do the weekly [TidyTuesday challenge](https://github.com/rfordatascience/tidytuesday) from `rfordatascience`.
 
