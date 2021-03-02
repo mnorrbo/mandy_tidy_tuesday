@@ -4,4 +4,13 @@ Here I will attempt to do the weekly [TidyTuesday challenge](https://github.com/
 
 I will use these challenges to improve my data visualisation skills in R, get more practice using Python and potentially to learn D3.
 
-# 2021 - Week 10: Super Bowl Ads
+📁 - folder containing all files from a week
+
+📊 - any plots created that week
+
+📃 - analysis script/notebook for that week 
+
+# 2021
+Week 10 - Super Bowl Commercials ([📁](2021_wk10) / [📊](2021_wk10/plots/) / [📃](2021_wk10/superbowl_ads.Rmd))
+
+![](2021_wk10/plots/ad_content.png)

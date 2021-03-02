@@ -118,7 +118,6 @@ ad_content_theme <- function() {
 ## Create visualisation
 
 ```{r}
-
 g1 <- ad_content %>% 
   filter(should_contain == TRUE) %>% 
   ggplot() +
@@ -158,6 +157,16 @@ g2 <- ad_content %>%
 
 
 g1 / g2
+```
+
+
+```{r}
+ggsave(filename="plots/ad_content.png", 
+       device="png", 
+       height=5, 
+       width=8, 
+       units="in", 
+       dpi=500)
 ```
 
 # Engagement across brands
@@ -286,4 +295,5 @@ ad_text %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
   
 ```
+
 
