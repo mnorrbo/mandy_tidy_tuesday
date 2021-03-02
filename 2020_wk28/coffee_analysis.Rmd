@@ -26,16 +26,7 @@ coffee_ratings <- read_csv("data/coffee_ratings.csv")
 
 ```
 
-
-```{r}
-
-head(coffee_ratings)
-names(coffee_ratings)
-
-```
-
-```{r}
-
+```{r, include = F}
 species <- unique(coffee_ratings$species)
 paste(species)
 ```
@@ -43,8 +34,7 @@ paste(species)
 There are `r length(species)` 'species' of coffee, in this dataset: `r paste(species, collapse = " & ")`. 
 
 
-
-```{r}
+```{r, fig.width = 10}
 coffee_ratings %>% 
   group_by(country_of_origin) %>% 
   summarise(avg_cup_points = mean(total_cup_points)) %>% 
@@ -55,10 +45,12 @@ coffee_ratings %>%
              y = avg_cup_points)) +
   coord_cartesian(ylim=c(80, 87)) +
   geom_col(fill = "#634832") +
-  theme_minimal() +
   labs(title = "Top 5 Countries of Origin",
-       subtitle =) +
-  theme(axis.title = element_blank(),
+       y = "Total cup points\n") +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 15,
+                                    color = "#38220f",
+                                    face = "bold"),
         axis.text.y = element_text(face = "bold", 
                                    size = 15,
                                    color = "#38220f"),
@@ -69,9 +61,8 @@ coffee_ratings %>%
                                   face = "bold",
                                   color = "#38220f"),
         plot.background = element_rect(fill = "#dbc1ac"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_line(color = "#967259")
-        
+        panel.background = element_rect(fill = "#dbc1ac"),
+        panel.grid = element_line(colour = "#dbc1ac")
         ) +
   geom_text(aes(label = round(avg_cup_points, 1)), 
             vjust = 2, 
@@ -85,7 +76,7 @@ coffee_ratings %>%
 ggsave(filename="plots/coffee_origin_plot.png", 
        device="png", 
        height=5, 
-       width=8, 
+       width=9, 
        units="in", 
        dpi=500)
 
