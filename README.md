@@ -40,3 +40,9 @@ I will use these challenges to improve my data visualisation skills in R, get mo
 ### Anime Data ([📁](2019_wk17) / [📊](2019_wk17/plots/) / [📃](2019_wk17/anime_fun.Rmd))
 
 ![](2019_wk17/plots/anime_synopsis_wordcloud.png)
+
+## Week 13
+
+### Seattle Pet Names ([📁](2019_wk13) / [📊](2019_wk13/plots/) / [📃](2019_wk13/seattle_pets.Rmd))
+
+![](2019_wk13/plots/seattle_pet_names.png)
