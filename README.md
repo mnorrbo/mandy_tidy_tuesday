@@ -20,6 +20,13 @@ I will use these challenges to improve my data visualisation skills in R, get mo
 
 # 2020
 
+## Week 30
+
+### RSPCA Animal Outcomes ([📁](2020_wk30) / [📊](2020_wk30/plots/) / [📃](2020_wk30/rspca_analysis.Rmd))
+
+![](2020_wk30/plots/animal_outcomes.png)
+
+
 ## Week 28
 
 ### Coffee Ratings ([📁](2020_wk28) / [📊](2020_wk28/plots/) / [📃](2020_wk28/coffee_analysis.Rmd))
