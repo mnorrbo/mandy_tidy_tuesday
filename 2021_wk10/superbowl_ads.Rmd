@@ -5,6 +5,8 @@ output:
   html_document:
     theme: journal
     highlight: haddock
+    toc: true
+    toc_float: true
     
 ---
 
@@ -53,8 +55,11 @@ This dataset was sourced from [rfordatascience/tidytuesday](https://github.com/r
 
 ```{r}
 library(tidyverse)
+library(tidytext)
 library(ggtext)
 library(patchwork)
+library(knitr)
+library(kableExtra)
 
 superbowl_ads <- read_csv("data/youtube.csv")
 ```
@@ -155,50 +160,81 @@ g2 <- ad_content %>%
 g1 / g2
 ```
 
-# Another visualisation
+# Text mining
 
 ## Recoding video categories
 
 ```{r}
 ad_text <- superbowl_ads %>% 
-  select(year, brand, title, description, category_id) %>% 
-  mutate(category_id = as.character(category_id),
-         # source: https://gist.github.com/dgp/1b24bf2961521bd75d6c#gistcomment-2714395
-         video_category = case_when(
-              category_id == "1" ~ "Film & Animation",
-              category_id == "2" ~ "Autos & Vehicles",
-              category_id == "10" ~ "Music",
-              category_id == "15" ~ "Pets & Animals",
-              category_id == "17" ~ "Sports",
-              category_id == "18" ~ "Short Movies",
-              category_id == "19" ~ "Travel & Events",
-              category_id == "20" ~ "Gaming",
-              category_id == "21" ~ "Videoblogging",
-              category_id == "22" ~ "People & Blogs",
-              category_id == "23" ~ "Comedy",
-              category_id == "24" ~ "Entertainment",
-              category_id == "25" ~ "News & Politics",
-              category_id == "26" ~ "Howto & Style",
-              category_id == "27" ~ "Education",
-              category_id == "28" ~ "Science & Technology",
-              category_id == "29" ~ "Nonprofits & Activism",
-              category_id == "30" ~ "Movies",
-              category_id == "31" ~ "Anime/Animation",
-              category_id == "32" ~ "Action/Adventure",
-              category_id == "33" ~ "Classics",
-              category_id == "34" ~ "Comedy",
-              category_id == "35" ~ "Documentary",
-              category_id == "36" ~ "Drama",
-              category_id == "37" ~ "Family",
-              category_id == "38" ~ "Foreign",
-              category_id == "39" ~ "Horror",
-              category_id == "40" ~ "Sci-Fi/Fantasy",
-              category_id == "41" ~ "Thriller",
-              category_id == "42" ~ "Shorts",
-              category_id == "43" ~ "Shows",
-              category_id == "44" ~ "Trailers",
-              TRUE ~ "Unknown"
+  mutate(ad_id = row_number()) %>% 
+  select(ad_id, year, brand, title, description, category_id) %>% 
+  mutate(
+    category_id = as.character(category_id),
+    # source: https://gist.github.com/dgp/1b24bf2961521bd75d6c#gistcomment-2714395
+    video_category = case_when(
+      category_id == "1" ~ "Film & Animation",
+      category_id == "2" ~ "Autos & Vehicles",
+      category_id == "10" ~ "Music",
+      category_id == "15" ~ "Pets & Animals",
+      category_id == "17" ~ "Sports",
+      category_id == "18" ~ "Short Movies",
+      category_id == "19" ~ "Travel & Events",
+      category_id == "20" ~ "Gaming",
+      category_id == "21" ~ "Videoblogging",
+      category_id == "22" ~ "People & Blogs",
+      category_id == "23" ~ "Comedy",
+      category_id == "24" ~ "Entertainment",
+      category_id == "25" ~ "News & Politics",
+      category_id == "26" ~ "Howto & Style",
+      category_id == "27" ~ "Education",
+      category_id == "28" ~ "Science & Technology",
+      category_id == "29" ~ "Nonprofits & Activism",
+      category_id == "30" ~ "Movies",
+      category_id == "31" ~ "Anime/Animation",
+      category_id == "32" ~ "Action/Adventure",
+      category_id == "33" ~ "Classics",
+      category_id == "34" ~ "Comedy",
+      category_id == "35" ~ "Documentary",
+      category_id == "36" ~ "Drama",
+      category_id == "37" ~ "Family",
+      category_id == "38" ~ "Foreign",
+      category_id == "39" ~ "Horror",
+      category_id == "40" ~ "Sci-Fi/Fantasy",
+      category_id == "41" ~ "Thriller",
+      category_id == "42" ~ "Shorts",
+      category_id == "43" ~ "Shows",
+      category_id == "44" ~ "Trailers",
+      TRUE ~ "Unknown"
   ))
 
+```
+
+## Top TF-IDF scores across video categories
+
+```{r}
+# nothing interesting from descriptions/titles with year, category, brand as document
+ad_text %>% 
+  unnest_tokens(
+    word,
+    description # or title
+  ) %>% 
+  count(
+    video_category, # or year, brand
+    word, 
+    sort = T) %>% 
+  bind_tf_idf(
+    word,
+    video_category,
+    n
+  ) %>% 
+  group_by(video_category) %>% 
+  slice_max(tf_idf, with_ties = F) %>% 
+  arrange(desc(n)) %>% 
+  select(video_category, word, n, tf_idf) %>% 
+  filter(!is.na(word)) %>% 
+  mutate(tf_idf = round(tf_idf, 3)) %>%
+  kbl() %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  
 ```
 
