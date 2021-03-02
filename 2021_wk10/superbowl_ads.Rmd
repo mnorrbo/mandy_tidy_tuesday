@@ -1,0 +1,26 @@
+---
+title: "Super Bowl Ads"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Dependencies
+
+```{r}
+library(tidyverse)
+```
+
+# Data exploration
+
+```{r}
+superbowl_ads <- read_csv("data/youtube.csv")
+```
+
+```{r}
+
+
+```
+
