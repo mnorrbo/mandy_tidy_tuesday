@@ -32,3 +32,11 @@ I will use these challenges to improve my data visualisation skills in R, get mo
 ### Coffee Ratings ([📁](2020_wk28) / [📊](2020_wk28/plots/) / [📃](2020_wk28/coffee_analysis.Rmd))
 
 ![](2020_wk28/plots/coffee_origin_plot.png)
+
+# 2019
+
+## Week 17
+
+### Anime Data ([📁](2019_wk17) / [📊](2019_wk17/plots/) / [📃](2019_wk17/anime_fun.Rmd))
+
+![](2019_wk17/plots/anime_synopsis_wordcloud.png)

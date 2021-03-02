@@ -1,0 +1,103 @@
+---
+title: "Anime Data from MyAnimeList"
+author: "Mandz"
+date: "07/05/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+```{r, warning = F, message = F}
+library(tidyverse)
+library(tidytext)
+library(ggwordcloud)
+library(bbplot)
+tidy_anime <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-04-23/tidy_anime.csv")
+
+```
+
+```{r}
+top_5_genres <- tidy_anime %>% drop_na %>% 
+  group_by(genre) %>% 
+  summarise(avg_score = mean(score, na.rm = TRUE)) %>% 
+  top_n(5, avg_score) %>% 
+  mutate(what = "Top 5")
+
+bottom_5_genres <- tidy_anime %>% drop_na %>% 
+  group_by(genre) %>% 
+  summarise(avg_score = mean(score, na.rm = TRUE)) %>% 
+  top_n(-5, avg_score) %>% 
+  mutate(what = "Bottom 5")
+
+dat <- bind_rows(bottom_5_genres, top_5_genres)
+
+dat %>% 
+  ggplot(aes(x = reorder(genre, avg_score), y = avg_score, fill = what)) +
+  geom_col() +
+  coord_flip() +
+  bbc_style()
+
+```
+
+```{r}
+top_5_studio <- tidy_anime %>% drop_na %>% 
+  group_by(studio) %>% 
+  summarise(avg_score = mean(score, na.rm = TRUE)) %>% 
+  top_n(5, avg_score) %>% 
+  mutate(what = "Top 5")
+
+bottom_5_studio <- tidy_anime %>% drop_na %>% 
+  group_by(studio) %>% 
+  summarise(avg_score = mean(score, na.rm = TRUE)) %>% 
+  top_n(-5, avg_score) %>% 
+  mutate(what = "Bottom 5")
+
+dat <- bind_rows(bottom_5_studio, top_5_studio)
+
+dat %>% 
+  ggplot(aes(x = reorder(studio, avg_score), y = avg_score, fill = what)) +
+  geom_col() +
+  coord_flip() +
+  bbc_style()
+
+```
+
+
+```{r, message = F}
+synopsis_words <- distinct(tidy_anime, synopsis) %>%
+  unnest_tokens(word, synopsis) %>%
+  count(word, sort = TRUE) %>%
+  anti_join(stop_words) %>% 
+  filter(word != "source")
+
+
+ggwordcloud(
+  synopsis_words$word,
+  synopsis_words$n,
+  min.freq = 400,
+  colors = c("#cdb4db", "#ffafcc", "#a2d2ff", "#ffc8dd", "#bde0fe"),
+  random.color = TRUE
+)
+
+ggsave("plots/anime_synopsis_wordcloud.png",
+       device="png",
+       width = 10,
+       height = 7,
+       unit = "in",
+       dpi = 500
+       )
+```
+
+
+```{r, message = F}
+synopsis_words %>%
+  inner_join(get_sentiments("afinn")) %>%
+  slice(1:10) %>%
+  mutate(word = factor(word, levels = word)) %>%
+ggplot +
+  aes(x = word, y = n, fill = value) +
+  geom_col()
+```
+
