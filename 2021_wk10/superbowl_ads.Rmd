@@ -160,6 +160,55 @@ g2 <- ad_content %>%
 g1 / g2
 ```
 
+# Engagement across brands
+
+```{r}
+superbowl_ads %>% 
+  arrange(year) %>% 
+  mutate(ad_id = row_number()) %>% 
+  select(ad_id, year, brand, title, like_count, dislike_count, view_count, comment_count) %>% 
+  drop_na() %>% 
+  pivot_longer(
+    cols = like_count:comment_count,
+    names_to = "count_category",
+    values_to = "count"
+  ) %>% 
+  group_by(year, brand, count_category) %>% 
+  summarise(total_count = sum(count)) %>% 
+  ggplot() +
+  aes(x = year, y = total_count, group = brand, colour = brand) +
+  geom_line() +
+  facet_wrap(~count_category, scales = "free_y")
+```
+
+# Highest dislike to like ratio
+
+```{r}
+superbowl_ads %>% 
+  arrange(year) %>% 
+  mutate(ad_id = row_number()) %>% 
+  select(ad_id, year, brand, title, like_count, dislike_count) %>% 
+  drop_na() %>% 
+  pivot_longer(
+    cols = like_count:dislike_count,
+    names_to = "count_category",
+    values_to = "count",
+    names_pattern = "(.*)_count" # get rid of suffix
+  ) %>%
+  group_by(ad_id) %>% 
+  mutate(ratio = count/lag(count)) %>%
+  drop_na() %>% 
+  filter(is.finite(ratio)) %>% 
+  select(-count) %>% 
+  group_by(year) %>% 
+  slice_max(ratio, n = 1) %>% 
+  ggplot(aes(x = year, y = ratio, colour = brand)) +
+  geom_jitter() +
+  geom_label(aes(label = brand))
+```
+
+
+
 # Text mining
 
 ## Recoding video categories
