@@ -1,0 +1,104 @@
+---
+title: "RSPCA Analysis"
+author: "Mandy"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup}
+knitr::opts_chunk$set(message = F, warning = F)
+```
+
+## Dependencies
+```{r}
+library(janitor)
+library(tidyverse)
+library(GGally)
+library(tidymodels)
+library(bbplot)
+```
+
+
+## Reading in data & cleaning variable names
+```{r}
+animal_complaints <- read_csv("data/animal_complaints.csv") %>% clean_names()
+animal_outcomes <- read_csv("data/animal_outcomes.csv") %>% clean_names()
+```
+
+# Animal outcomes by animal type
+```{r, fig.width = 10}
+animal_outcomes %>% 
+  select(year, animal_type, outcome, total) %>% 
+  filter(animal_type %in% c("Dogs", "Cats", "Wildlife")) %>%
+  filter(outcome %in% c("Rehomed", "Euthanized", "Reclaimed")) %>% 
+  ggplot(aes(x = year, y = total, color = animal_type)) +
+  geom_line(size = 1.4) +
+  facet_wrap(~outcome) +
+  bbc_style() +
+  theme(legend.position = "bottom") +
+  scale_color_manual(values = c("#F6D55C", "#20639B", "#ED553B"))
+```
+
+# Animal outcomes by territory
+
+```{r}
+
+animal_outcomes <- animal_outcomes %>%
+  pivot_longer(
+    names_to = "territory", 
+    values_to = "count",
+    cols = c(act:wa)) %>% 
+  select(-total) %>% 
+  mutate(territory = recode(territory,
+                            act = "Australian Capital Territory",
+                            nsw = "New South Wales",
+                            nt = "Northern Territory",
+                            qld = "Queensland",
+                            sa = "South Australia",
+                            tas = "Tasmania",
+                            vic = "Victoria",
+                            wa = "Western Australia"))
+
+animal_outcomes %>% 
+  select(year, animal_type, territory, count, outcome) %>% 
+  filter(animal_type == "Dogs") %>% 
+  filter(outcome %in% c("Rehomed", "Euthanized", "Reclaimed")) %>% 
+  rename(Outcome = outcome) %>% 
+  ggplot(aes(x = year, y = count, color = Outcome)) +
+  geom_line(size = 1) +
+  facet_wrap(~territory) +
+  theme_minimal() +
+  theme(
+    legend.position= c(0.82, 0.14),
+    legend.text = element_text(face = "bold",
+                                   size = 10),
+    legend.title = element_text(size = 15,
+                                face = "bold"),
+    axis.title.y = element_blank(),
+    strip.text.x = element_text(size = 10, colour = "black", face = "bold")
+  ) +
+  scale_colour_manual(
+    values = c("#868789",
+               "#028BCC",
+               "#7EB859")
+    
+  ) +
+  labs(
+    x = "Year",
+    y = "Count",
+    title = "Animal Outcomes by Australian Territory",
+    subtitle = "From 1999 to 2018",
+    caption = "Data Source: RSPCA"
+  )
+```
+
+```{r, echo = F, include = F}
+ggsave(filename="plots/animal_outcomes.png", 
+       device="png", 
+       height=15, 
+       width=18, 
+       units="cm", 
+       dpi=500)
+
+```
