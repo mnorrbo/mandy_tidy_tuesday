@@ -1,0 +1,264 @@
+---
+title: "Art Collections"
+author: "Mandy Norrbo"
+output:
+  html_document:
+    theme: journal
+    highlight: haddock
+    toc: true
+    toc_float: true
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+
+# About the dataset
+
+
+This dataset was sourced from [rfordatascience/tidytuesday](https://github.com/rfordatascience/tidytuesday) and contains metadata for around 70,000 artworks that Tate Art Museum owns or jointly owns.
+
+
+<details>
+<summary>**Data Dictionary**</summary>
+
+<br>
+
+`artwork.csv`
+
+|**variable**           |**class**     |**description** |
+|:------------------|:---------|:-----------|
+|*id*                 |double    | Unique ID |
+|*accession_number*   |character | Accession number |
+|*artist*             |character | Artist Name |
+|*artistRole*         |character | Artist or other attribution |
+|*artistId*           |double    | Artist ID |
+|*title*              |character | Title of the piece of art |
+|*dateText*           |character | Date as raw text (pretty messy) |
+|*medium*             |character | Medium of art, quite a lot of overlap |
+|*creditLine*         |character | How acquired |
+|*year*               |double    | Year of creation |
+|*acquisitionYear*    |double    | Year acquired |
+|*dimensions*         |character | Dimensions as character |
+|*width*              |double    | Width of art |
+|*height*             |double    | Height of art |
+|*depth*              |double    | Depth of art |
+|*units*              |character | units of measure |
+|*inscription*        |character | inscription if present |
+|*thumbnailCopyright* |logical   | Thumbnail copyright|
+|*thumbnailUrl*       |character | Thumbnail URL |
+|*url*                |character | art URL |
+
+`artists.csv`
+
+|variable     |class     |description |
+|:------------|:---------|:-----------|
+|*id*           |double    | Artist ID |
+|*name*         |character | Artist Name |
+|*gender*       |character | Artist gender|
+|*dates*        |character | Date as a character |
+|*yearOfBirth*  |double    | Year of birth |
+|*yearOfDeath*  |double    | Year of death |
+|*placeOfBirth* |character | Place of birth (typically city, country) |
+|*placeOfDeath* |character | Place of death (typically city, country) |
+|*url*          |character | Artist URL |
+
+</details>
+
+# Dependencies & Data
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(janitor)
+library(ggwordcloud)
+
+artists <- read_csv("data/artist_data.csv") %>% clean_names()
+artwork <- read_csv("data/artwork.csv") %>% clean_names()
+
+# join by name
+joined_name <- inner_join(artists, artwork, by = c("name" = "artist"))
+```
+
+
+```{r, eval = F, include = F}
+
+# having fun with purrr to check missing values
+list(artists, artwork, joined_name) %>% 
+  map(~summarise(.x, across(.fns = ~sum(is.na(.)))))
+
+```
+
+# Plan
+
+- Artists: Year of birth and death, place of birth and death
+- Artwork title: text - gender of artist?
+- Artwork medium - gender? artist with most different mediums?
+- width & height - smallest and largest artwork?
+- difference between year and acquisition year?
+
+```{r}
+subset_df <- joined_name %>% 
+  select(-c(id.x, dates, url.x, id.y, accession_number, artist_id, date_text, dimensions, units, thumbnail_url, thumbnail_copyright, url.y))
+
+subset_df %>% names()
+```
+
+# Artists that died where they were born
+```{r}
+staying_artists <- subset_df %>% 
+  select(name, gender, place_of_birth, place_of_death) %>% 
+  filter(place_of_birth == place_of_death) %>% 
+  distinct(name, place_of_birth)
+
+staying_artists
+```
+
+# Artists that died young
+```{r}
+died_young <- subset_df %>% 
+  select(name, gender, year_of_birth, year_of_death) %>%
+  distinct() %>% 
+  mutate(age_at_death = year_of_death - year_of_birth) %>% 
+  filter(age_at_death > 15 & age_at_death < 120) %>% 
+  select(name, age_at_death) %>% 
+  slice_min(age_at_death, n = 50) %>% 
+  pull(name)
+
+died_young
+```
+
+```{r}
+subset_df %>% 
+  select(name, gender, title, year) %>% 
+  unnest_tokens(
+    word,
+    title
+  ) %>% 
+  count(year, word, sort = T) %>% 
+  bind_tf_idf(
+    word,
+    year,
+    n
+  ) %>% 
+  group_by(year) %>% 
+  slice_max(tf_idf) %>% 
+  select(year, word, n, tf_idf) %>% 
+  filter(n > 10,
+         !(word %in% c("blank", "untitled", "no"))) %>% 
+  arrange(desc(tf_idf))
+```
+
+```{r}
+subset_df %>% 
+  select(name, gender, title, year) %>% 
+  unnest_tokens(
+    bigram,
+    title,
+    token = "ngrams",
+    n = 2
+  ) %>% 
+  count(year, bigram, sort = T) %>% 
+  bind_tf_idf(
+    bigram,
+    year,
+    n
+  ) %>% 
+  group_by(year) %>% 
+  slice_max(tf_idf) %>% 
+  select(year, bigram, n, tf_idf) %>% 
+  arrange(desc(n)) 
+```
+
+```{r}
+subset_df %>% 
+  select(name, gender, title, year) %>% 
+  unnest_tokens(
+    word,
+    title
+  ) %>% 
+  count(name, word, sort = T) %>% 
+  bind_tf_idf(
+    word,
+    name,
+    n
+  ) %>% 
+  group_by(name) %>% 
+  slice_max(tf_idf, n = 1, with_ties = F) %>% 
+  select(name, word, n, tf_idf) %>% 
+  anti_join(stop_words) %>% 
+  filter(!(word %in% c("title", "untitled", "blank")),
+         n > 1) %>% 
+  arrange(desc(n), desc(tf_idf))
+```
+
+```{r}
+
+art_subjects <- subset_df %>% 
+  select(name, gender, title, year) %>% 
+  unnest_tokens(
+    bigram,
+    title,
+    token = "ngrams",
+    n = 2
+  ) %>% 
+  separate(bigram, c("word_1", "word_2"), sep = " ") %>% 
+  filter(word_1 == "of") %>%
+  count(word_1, word_2, sort = TRUE) %>% 
+  anti_join(stop_words, by = c("word_2" = "word")) %>% 
+  slice(-1) %>% 
+  slice_max(n, n = 50) %>% 
+  select(-word_1)
+
+```
+
+
+```{r}
+gender_words <- subset_df %>% 
+  select(gender, title) %>% 
+  filter(gender %in% c("Male", "Female")) %>% 
+  unnest_tokens(
+    word,
+    title
+  ) %>% 
+  count(gender, word, sort = T) %>% 
+  bind_tf_idf(
+    word,
+    gender,
+    n
+  ) %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  group_by(gender) %>% 
+  slice_max(n, n = 50, with_ties = F) %>% 
+  select(gender, word, sentiment, n)%>% 
+  group_by(gender) %>% 
+  mutate(n_perc = n/sum(n)) %>% 
+  ungroup()
+```
+
+```{r}
+gender_words %>% 
+  unite(
+    col = gender_sentiment,
+    c(gender, sentiment),
+    sep = "_",
+    remove = F
+  ) %>% 
+ggplot(
+  aes(label = word, size = n_perc, color = gender_sentiment)) +
+  geom_text_wordcloud() +
+  scale_size_area(max_size = 10) +
+  theme_minimal() +
+  theme(strip.text = element_text(size = 20, face = "bold")) +
+  facet_wrap(~gender) +
+  scale_color_manual(values = c(
+    "#6b2a59",
+    "#ed47be",
+    "#22375c",
+    "#4783ed"
+  ))
+
+```
+
