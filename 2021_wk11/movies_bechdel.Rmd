@@ -1,0 +1,107 @@
+---
+title: "Movies & Bechdel Test"
+author: "Mandy Norrbo"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggthemes)
+library(gganimate)
+library(scales)
+
+movies <- read_csv("data/movies.csv")
+raw_bechdel <- read_csv("data/raw_bechdel.csv")
+```
+
+```{r}
+movies %>% 
+  ggplot() +
+  aes(x = binary, y = imdb_rating) +
+  geom_boxplot()
+```
+
+```{r}
+subset_movies <- movies %>%
+  select(year, title, binary, budget_2013, plot, rated, language, country, writer, metascore, imdb_rating, director, actors, genre, awards, runtime)  %>% 
+  mutate(first_country = str_extract(country, pattern = "[A-z ]+")) %>% 
+  mutate(first_genre = str_extract(genre, pattern = "[A-z ]+"))
+
+unique(subset_movies$first_genre)
+```
+
+What are some interesting variables/potential relationships?
+
+- gganimate across years
+
+```{r}
+subset_movies %>% 
+  group_by(first_genre) %>% 
+  mutate(count = n()) %>% 
+  mutate(genre = if_else(count < 100, "Other", first_genre))
+```
+
+
+```{r}
+subset_movies %>% 
+  select(year, metascore, imdb_rating, budget_2013, first_genre) %>% 
+  drop_na() %>% 
+  group_by(first_genre) %>% 
+  mutate(count = n()) %>% 
+  mutate(genre = if_else(count < 100, "Other", first_genre)) %>% 
+  mutate(year = as.integer(year)) %>% 
+  ggplot(aes(x = metascore, y = imdb_rating, size = budget_2013, colour = budget_2013)) +
+  geom_point(alpha = 0.7, show.legend = FALSE) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  labs(title = 'Year: {frame_time}', x = 'Metascore', y = 'IMDB rating') +
+  transition_time(year) +
+  ease_aes('linear')
+```
+
+```{r}
+subset_movies %>% 
+  select(year, binary) %>% 
+  drop_na() %>% 
+  mutate(year = as.integer(year)) %>% 
+  ggplot(aes(x = binary, fill = binary)) +
+  geom_bar(show.legend = F) +
+  theme_minimal() +
+  scale_fill_manual(values = c("darkblue", "darkred")) +
+  labs(title = 'Year: {frame_time}', x = 'Bechdel test result', y = 'Count') +
+  transition_time(year) +
+  ease_aes('linear')
+```
+
+```{r}
+subset_movies %>% 
+  select(year, binary) %>% 
+  drop_na() %>% 
+  mutate(year = as.integer(year)) %>%
+  filter(year > 1980) %>% 
+  group_by(year, binary) %>% 
+  summarise(count = n()) %>% 
+  pivot_wider(names_from = binary,
+              values_from = count) %>% 
+  mutate(percentage_Pass= round(PASS/(FAIL+PASS), 3),
+         percentage_Fail = round(FAIL/(FAIL+PASS), 3)) %>% 
+  pivot_longer(names_to = "test_outcome", 
+               values_to = "percentage",
+               names_prefix = "percentage_", 
+               cols = percentage_Pass:percentage_Fail) %>% 
+  mutate(label_position = if_else(test_outcome == "Pass", 0.1, 0.9)) %>% 
+  ggplot(aes(x = "", y = percentage, fill = factor(test_outcome))) +
+  geom_col(show.legend = F, position = "fill") +
+  theme_classic() +
+  theme(axis.title = element_text(size = 20, face = "bold"),
+        axis.text = element_text(size = 15, face = "bold"),
+        plot.title = element_text(size = 30, face = "bold", hjust = -0.2),
+        plot.subtitle = element_text(size = 20)) +
+  scale_fill_manual(values = c("darkred", "darkblue")) +
+    geom_text(aes(y = label_position, label = test_outcome, col = test_outcome), size=6, show.legend = F) + 
+  scale_y_continuous(labels = percent) +
+  labs(title = "Year: {frame_time}\n", x = NULL, y = "% of Bechdel test outcomes \n", subtitle = "") +
+  transition_time(year) +
+  ease_aes('linear') 
+```
+
