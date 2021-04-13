@@ -33,6 +33,13 @@ I will use these challenges to improve my data visualisation skills in R, get mo
 
 ![](2020_wk28/plots/coffee_origin_plot.png)
 
+## Week 16
+
+### Best Rap Artists ([📁](2020_wk16) / [📊](2020_wk16/plots/) / [📃](2020_wk16/rap_artists.Rmd))
+
+![](2020_wk16/plots/female_rappers.png)
+
+
 # 2019
 
 ## Week 17
