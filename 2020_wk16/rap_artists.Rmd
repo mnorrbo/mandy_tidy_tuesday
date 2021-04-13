@@ -1,0 +1,90 @@
+---
+title: "Rap Artists"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(emojifont)
+```
+
+# Data
+
+```{r}
+polls <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-04-14/polls.csv')
+rankings <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-04-14/rankings.csv')
+```
+
+# Missing values
+
+```{r}
+polls %>% 
+  summarise(across(.fns = ~sum(is.na(.)))) # 530 NAs in critic_country2
+
+rankings %>% 
+  summarise(across(.fns = ~sum(is.na(.)))) # 0 NAs
+```
+
+# Data exploration
+
+```{r}
+label_data <- rankings %>% 
+  filter(gender == "female") %>% 
+  filter(points > 10) %>% 
+  mutate(artist_song = str_glue("{title} - {artist}"))
+
+rankings %>% 
+  filter(gender == "female") %>% 
+  ggplot() +
+  geom_text(
+    aes(
+      y = points, 
+      x = year,
+      label = fontawesome("fa-microphone")),
+    colour = "#bc6c25",
+    family='fontawesome-webfont'
+  ) +
+  ggrepel::geom_label_repel(
+    aes(
+      y = points, 
+      x = year, 
+      label = artist_song,
+      fill = artist_song
+    ), 
+    data = label_data,
+    label.padding = unit(0.2, "lines"), 
+    label.size = 0,
+    color = "black",
+    min.segment.length = 0,
+    segment.color = "#bc6c25"
+    # arrow = arrow(angle = 30, length = unit(0.1, "inches")),
+    # nudge_x = 5,
+    # nudge_y = 1
+  ) +
+  scale_fill_manual(
+    values = c(
+      "#ccd5ae",
+      "#e9edc9",
+      "#fefae0",
+      "#faedcd",
+      "#d4a373"
+    )
+  ) +
+  labs(
+    x = "Year",
+    y = "Points"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(face = "bold")
+  )
+```
+
+
