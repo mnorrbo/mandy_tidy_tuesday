@@ -97,7 +97,8 @@ rankings %>%
   labs(
     title = "top songs by female rappers.",
     x = "Year",
-    y = "Points"
+    y = "Points",
+    caption = "Data Source: BBC Music"
   ) +
   theme(
     legend.position = "none",
@@ -111,8 +112,10 @@ rankings %>%
     
   ) +
   coord_fixed(ratio = 1/1.5)
+```
 
 
+```{r}
 ggsave(filename="plots/female_rappers.png", 
        device="png", 
        height=5, 
