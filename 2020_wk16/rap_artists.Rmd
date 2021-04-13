@@ -11,7 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(ggrepel)
 library(emojifont)
+library(showtext)
 ```
 
 # Data
@@ -31,14 +33,27 @@ rankings %>%
   summarise(across(.fns = ~sum(is.na(.)))) # 0 NAs
 ```
 
-# Data exploration
+# Creating labels 
 
 ```{r}
 label_data <- rankings %>% 
   filter(gender == "female") %>% 
-  filter(points > 10) %>% 
+  filter(points >= 10) %>% 
   mutate(artist_song = str_glue("{title} - {artist}"))
+```
 
+```{r}
+font_add_google("ZCOOL KuaiLe", "zcool")
+font_add_google("Rubik", "rubik")
+
+library(ggthemr)
+ggthemr("dust")
+```
+
+
+# Plotting female rappers
+
+```{r}
 rankings %>% 
   filter(gender == "female") %>% 
   ggplot() +
@@ -47,10 +62,10 @@ rankings %>%
       y = points, 
       x = year,
       label = fontawesome("fa-microphone")),
-    colour = "#bc6c25",
+    colour = "#5C4F41",
     family='fontawesome-webfont'
   ) +
-  ggrepel::geom_label_repel(
+  geom_label_repel(
     aes(
       y = points, 
       x = year, 
@@ -62,7 +77,8 @@ rankings %>%
     label.size = 0,
     color = "black",
     min.segment.length = 0,
-    segment.color = "#bc6c25"
+    segment.color = "#5C4F41",
+    family = "zcool"
     # arrow = arrow(angle = 30, length = unit(0.1, "inches")),
     # nudge_x = 5,
     # nudge_y = 1
@@ -71,20 +87,39 @@ rankings %>%
     values = c(
       "#ccd5ae",
       "#e9edc9",
-      "#fefae0",
+      "#e6dca5",
       "#faedcd",
-      "#d4a373"
+      "#d4a373",
+      "#c6c98d",
+      "#e6d4ba"
     )
   ) +
   labs(
+    title = "top songs by female rappers.",
     x = "Year",
     y = "Points"
   ) +
-  theme_minimal() +
   theme(
     legend.position = "none",
-    axis.text = element_text(face = "bold")
-  )
+    axis.text = element_text(family = "rubik"),
+    plot.title = element_text(family = "rubik", 
+                              face = "bold",
+                              size = 20,
+                              hjust = 1,
+                              vjust = 1),
+    axis.title = element_text(family = "rubik")
+    
+  ) +
+  coord_fixed(ratio = 1/1.5)
+
+
+ggsave(filename="plots/female_rappers.png", 
+       device="png", 
+       height=5, 
+       width=8, 
+       units="in", 
+       dpi=500)
+
 ```
 
 
