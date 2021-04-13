@@ -1,0 +1,56 @@
+---
+title: "Video Games analysis"
+author: "Mandy"
+date: "17/03/2021"
+output: html_document
+---
+
+# Dependencies
+```{r}
+library(tidyverse)
+
+games <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-03-16/games.csv')
+```
+
+```{r}
+games %>% 
+  group_by(year, month) %>%
+  slice_max(avg) %>% 
+  ungroup() %>% 
+  count(gamename, sort = T)
+
+games %>% 
+  group_by(year, month) %>%
+  slice_max(peak) %>% 
+  ungroup() %>% 
+  count(gamename, sort = T)
+```
+
+```{r}
+games %>% 
+  group_by(year, month) %>% 
+  summarise(avg_gain = mean(gain, na.rm = T)) %>% 
+  ungroup() %>% 
+  select(month, year, everything()) %>% 
+  unite("yearmonth", month:year, sep = " ") %>% 
+  mutate(yearmonth = lubridate::my(yearmonth)) %>% 
+  ggplot() +
+  aes(x = yearmonth, y = avg_gain, group = 1) +
+  geom_line()
+```
+
+
+```{r}
+
+games %>% 
+  group_by(year, month) %>% 
+  summarise(avg_use = mean(avg, na.rm = T)) %>% 
+  ungroup() %>% 
+  select(month, year, everything()) %>% 
+  unite("yearmonth", month:year, sep = " ") %>% 
+  mutate(yearmonth = lubridate::my(yearmonth)) %>% 
+  ggplot() +
+  aes(x = yearmonth, y = avg_use, group = 1) +
+  geom_line()
+```
+
