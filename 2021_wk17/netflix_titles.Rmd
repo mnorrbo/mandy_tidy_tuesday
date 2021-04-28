@@ -1,0 +1,74 @@
+---
+title: "Netflix Titles"
+author: "Mandy"
+date: "27/04/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidytext)
+```
+
+```{r}
+netflix_titles <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-04-20/netflix_titles.csv')
+
+netflix_titles %>% 
+  summarise(across(.fns = ~sum(is.na(.))))
+# a lot of missing values in director column
+```
+
+# Separate genre categories into n columns 
+```{r}
+max_categories <- netflix_titles %>% 
+  mutate(comma_count = str_count(listed_in, ",")) %>% 
+  summarise(max_comma_count = max(comma_count, na.rm = TRUE)) %>% 
+  summarise(max_categories = max_comma_count + 1) %>% 
+  pull()
+
+netflix_titles <- netflix_titles %>% 
+  separate(listed_in, 
+           into = paste("category", 1:max_categories), 
+           sep = ",") %>% 
+  pivot_longer(`category 1`:(paste("category", max_categories)))
+```
+
+# Separate cast into n columns
+
+```{r}
+max_cast_members <- netflix_titles %>% 
+  mutate(comma_count = str_count(cast, ",")) %>% 
+  summarise(max_comma_count = max(comma_count, na.rm = TRUE)) %>% 
+  summarise(max_categories = max_comma_count + 1) %>% 
+  pull()
+
+netflix_titles <- netflix_titles %>% 
+  separate(cast, 
+           into = paste("cast member", 1:max_cast_members), 
+           sep = ",") %>% 
+  pivot_longer(`cast member 1`:(paste("cast member", max_cast_members)), names_to = "category", values_to = "full_name") %>% 
+  drop_na(full_name, value)
+```
+
+
+
+# Most common words in Netflix descriptions
+
+```{r}
+netflix_titles %>%
+  unnest_tokens(
+    word,
+    description
+  ) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = T) 
+```
+
+```{r}
+netflix_titles %>% select(title, description) %>% filter(str_detect(description, "[Ss]ex"))
+```
+
