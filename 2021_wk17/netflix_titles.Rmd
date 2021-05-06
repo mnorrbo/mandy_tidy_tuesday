@@ -68,7 +68,3 @@ netflix_titles %>%
   count(word, sort = T) 
 ```
 
-```{r}
-netflix_titles %>% select(title, description) %>% filter(str_detect(description, "[Ss]ex"))
-```
-
