@@ -3,17 +3,14 @@
 ui <- fluidPage(
     
     radioButtons(
-        "type",
+        "movie_or_tv",
         "Movie or TV show",
         choices = type_options
     ),
     
-    selectizeInput(
-        "genre", 
-        label = "Which genres are you interested in?",
-        choices = genre_options,
-        multiple = TRUE
-    ),
+    uiOutput("conditional_genre"),
+    
+    
     
     
     DT::dataTableOutput(

@@ -25,7 +25,8 @@ netflix_titles <- netflix_titles %>%
     names_to = "category_no",
     values_to = "genre"
   ) %>% 
-  mutate(genre = trimws(genre))
+  mutate(genre = trimws(genre)) %>% 
+  drop_na(genre)
 
 genre_options <- unique(netflix_titles$genre)
 
@@ -35,7 +36,6 @@ genre_options <- unique(netflix_titles$genre)
 
 
 movie_genre_summary <- netflix_titles %>% 
-  drop_na(genre) %>% 
   group_by(type, genre) %>% 
   summarise(count = n(), .groups = "drop") %>% 
   select(-count)
