@@ -10,6 +10,52 @@ I will use these challenges to improve my data visualisation skills in R, get mo
 
 📃 - analysis script/notebook for that week 
 
+# 2023
+
+## Week 17
+
+###  ([📁](2023_wk17) / [📊](2023_wk17/plots/) / [📃](2023_wk17/london_marathon.R))
+
+![](2023_wk17/plots/london_marathon.png)
+
+## Week 15
+
+###  ([📁](2023_wk15) / [📊](2023_wk15/plots/) / [📃](2023_wk15/egg_production.R))
+
+![](2023_wk15/plots/egg_production.png)
+
+## Week 13
+
+###  ([📁](2023_wk13) / [📊](2023_wk13/plots/) / [📃](2023_wk13/timezones.R))
+
+![](2023_wk13/plots/timezones.png)
+
+
+## Week 11
+
+###  ([📁](2023_wk11) / [📊](2023_wk11/plots/) / [📃](2023_wk11/afrisenti.R))
+
+![](2023_wk11/plots/european_drug_development.png)
+
+
+## Week 9
+
+###  ([📁](2023_wk9) / [📊](2023_wk9/plots/) / [📃](2023_wk9/afrisenti.R))
+
+![](2023_wk9/plots/afrisenti.png)
+
+## Week 7
+
+###  ([📁](2023_wk7) / [📊](2023_wk7/plots/) / [📃](2023_wk7/age_gaps.R))
+
+![](2023_wk7/plots/age_gaps.jpg)
+
+## Week 5 
+
+### Pet Cats UK ([📁](2023_wk5) / [📊](2023_wk5/plots/) / [📃](2023_wk5/cats.R))
+
+![](2023_wk5/plots/cats.png)
+
 # 2021
 
 ## Week 10
